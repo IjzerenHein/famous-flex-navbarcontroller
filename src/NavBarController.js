@@ -206,50 +206,105 @@ define(function(require, exports, module) {
 
     /**
      * Shows a new view.
+     *
+     * @param {Renderable} renderable View/surface to show.
+     * @param {Object} [transition] Transition.
+     * @param {Function} [callback] Callback function.
+     * @return {Object} Navigation-item object
      */
-    NavBarController.prototype.show = function(item, transition, callback) {
+    NavBarController.prototype.show = function(renderable, transition, callback) {
+
+        // Create new nav-item
         var navItem = {
+            renderable: renderable,
             navBar: new NavBar(this.options.navBar),
+            navBarController: this,
             _eventOutput: new EventHandler()
         };
-        if (item.title || item.view) {
-            navItem.setTitle(item.title);
-            navItem.view = item.view;
-        }
-        else {
-            navItem.view = item;
-        }
+        EventHandler.setOutputHandler(navItem, navItem._eventOutput);
+        var prevNavItem = this._navStack.length ? this._navStack[this._navStack.length - 1] : undefined;
         this._navStack.push(navItem);
 
-        this.navBarAC.halt();
+        // Hookup navbar
+        navItem.navBar.setBackButton(prevNavItem ? prevNavItem.navBar.getTitle() : undefined);
+        navItem.navBar.on('back', this.hide.bind(this));
+
+        // Inform view of the navigation
+        if (navItem.renderable.setNavigation) {
+            navItem.renderable.setNavigation(navItem);
+        }
+
+        // Notify views
+        var event = {
+            target: this
+        };
+        if (prevNavItem) {
+            prevNavItem._eventOutput.emit('starthide', event);
+        }
+        navItem._eventOutput.emit('startshow', event);
+
+        // Show view
         this.navBarAC.show(navItem.navBar, {
             animation: this.options.animations.show.navBar,
             transition: transition
         });
-
-        this.contentAC.halt();
-        this.contentAC.show(navItem.view, {
+        this.contentAC.show(navItem.renderable, {
             animation: this.options.animations.show.view,
             transition: transition
-        }, callback);
-
-        if (navItem.view.setNavigation) {
-            var delegate = {
-                navBar: navItem.navBar,
-                navBarController: this
-            };
-            EventHandler.setOutputHandler(delegate, navItem._eventOutput);
-            navItem.view.setNavigation(delegate);
-        }
-
-        return this;
+        }, function() {
+            if (prevNavItem) {
+                prevNavItem._eventOutput.emit('endhide', event);
+            }
+            navItem._eventOutput.emit('endshow', event);
+            if (callback) {
+                callback();
+            }
+        });
+        return navItem;
     };
 
     /**
-     * Hides the last shown view.
+     * Hides the current view.
+     *
+     * @param {Object} [transition] Transition.
+     * @param {Function} [callback] Callback function.
+     * @return {Object} Navigation-item object
      */
     NavBarController.prototype.hide = function(transition, callback) {
-        return this;
+        if (!this._navStack.length) {
+            return undefined;
+        }
+        var navItem = this._navStack.pop();
+        var prevNavItem = this._navStack.length ? this._navStack[this._navStack.length - 1] : undefined;
+
+        // Notify views
+        var event = {
+            target: this
+        };
+        navItem._eventOutput.emit('starthide', event);
+        if (prevNavItem) {
+            prevNavItem._eventOutput.emit('startshow', event);
+        }
+
+        // Show previous view
+        this.navBarAC.show(prevNavItem ? prevNavItem.navBar : undefined, {
+            animation: this.options.animations.hide.navBar,
+            transition: transition
+        });
+        this.contentAC.show(prevNavItem ? prevNavItem.renderable : undefined, {
+            animation: this.options.animations.hide.view,
+            transition: transition
+        }, function() {
+            navItem._eventOutput.emit('endhide', event);
+            if (prevNavItem) {
+                prevNavItem._eventOutput.emit('endshow', event);
+            }
+            if (callback) {
+                callback();
+            }
+        });
+
+        return navItem;
     };
 
     module.exports = NavBarController;

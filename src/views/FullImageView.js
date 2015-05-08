@@ -96,6 +96,18 @@ define(function(require, exports, module) {
     FullImageView.prototype.setNavigation = function(navigation) {
         this.navigation = navigation;
         navigation.navBar.setTitle('Full Image');
+        navigation.on('starthide', function() {
+            console.log('FullImageView -> starthide');
+        });
+        navigation.on('endhide', function() {
+            console.log('FullImageView -> endhide');
+        });
+        navigation.on('startshow', function() {
+            console.log('FullImageView -> startshow');
+        });
+        navigation.on('endshow', function() {
+            console.log('FullImageView -> endshow');
+        });
     };
 
     module.exports = FullImageView;

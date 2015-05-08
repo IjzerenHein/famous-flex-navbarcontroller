@@ -40,7 +40,7 @@ define(function(require, exports, module) {
     PhoneFrameView.DEFAULT_OPTIONS = {
         classes: ['frame'],
         imageSize: [400, 700],
-        innerMargins: [100, 60, 100, 60]
+        innerMargins: [100, 59, 100, 60]
     };
 
     function _createRenderables() {

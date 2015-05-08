@@ -68,7 +68,6 @@ define(function(require, exports, module) {
     var View = require('famous/core/View');
     var LayoutController = require('famous-flex/LayoutController');
     var NavBarLayout = require('famous-flex/layouts/NavBarLayout');
-    var ImageSurface = require('famous/surfaces/ImageSurface');
 
     /**
      * @class
@@ -94,8 +93,7 @@ define(function(require, exports, module) {
 
         // create initial renderables
         this._renderables = {
-            background: _createRenderable.call(this, 'background'),
-            backIcon: _createRenderable.call(this, 'backIcon', this.options.backIconImage)
+            background: _createRenderable.call(this, 'background')
         };
         this.layout.setDataSource(this._renderables);
 
@@ -125,7 +123,7 @@ define(function(require, exports, module) {
             background: false,
             backIcon: true
         },
-        backIconImage: 'data:image/svg+xml;utf8,<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="512px" height="512px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve"><polygon points="352,115.4 331.3,96 160,256 331.3,416 352,396.7 201.5,256 "/></svg>',
+        backIconContent: '<image src=\'data:image/svg+xml;utf8,<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="512px" height="512px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve"><polygon points="352,115.4 331.3,96 160,256 331.3,416 352,396.7 201.5,256 "/></svg>\' />',
         layoutController: {
             layout: NavBarLayout
         }
@@ -146,18 +144,10 @@ define(function(require, exports, module) {
         if ((data !== undefined) && (data instanceof Object)) {
             return data;
         }
-        if (id === 'backIcon') {
-            return new ImageSurface({
-                classes: this.classes.concat([id]),
-                content: data
-            });
-        }
-        else {
-            return new Surface({
-                classes: this.classes.concat([id]),
-                content: data ? ('<div>' + data + '</div>') : undefined
-            });
-        }
+        return new Surface({
+            classes: this.classes.concat([id]),
+            content: data ? ('<div>' + data + '</div>') : undefined
+        });
     }
 
     /**
@@ -190,25 +180,42 @@ define(function(require, exports, module) {
      * @return {NavBar} this
      */
     NavBar.prototype.setTitle = function(title) {
-        title = title || '';
+
+        // Remove any custom renderable
+        this._title = this._title || {};
+        this._title.text = undefined;
+        this._title.customItem = undefined;
+        if (!title) {
+            this._renderables.title = undefined;
+            this.layout.reflowLayout();
+            return this;
+        }
         if ((title instanceof String) || (typeof title === 'string')) {
-            if (this._titleIsCustomRenderable) {
-                this._titleIsCustomRenderable = false;
-                this._renderables.title = undefined;
+            this._title.text = title;
+            if (!this._title.item) {
+                this._title.item = _createRenderable.call(this, 'item', title);
             }
-            if (!this._renderables.title) {
-                this._renderables.title = _createRenderable.call(this, 'item', title);
+            else {
+                this._title.item.setContent('<div>' + title + '</div>');
             }
-            else if (this._renderables.title.setContent) {
-                this._renderables.title.setContent('<div>' + title + '</div>');
-            }
+            this._renderables.title = this._title.item;
         }
         else {
-            this._titleIsCustomRenderable = true;
-            this._renderables.title = title;
+            this._title.customItem = title;
+            this._renderables.title = this._title.customItem;
         }
         this.layout.reflowLayout();
         return this;
+    };
+
+    /**
+     * Get the current title.
+     *
+     * @return {String|Renderable} string or custom renderable.
+     */
+    NavBar.prototype.getTitle = function() {
+        this._title = this._title || {};
+        return this._title.customItem || this._title.text;
     };
 
     /**
@@ -219,41 +226,49 @@ define(function(require, exports, module) {
      * @return {NavBar} this
      */
     NavBar.prototype.setBackButton = function(backButton) {
+
+        // Remove any custom renderable
+        this._backButton = this._backButton || {};
+        if (this._backButton.customItem && this._backButton.customItem.removeListener) {
+            this._backButton.customItem.removeListener(this._navigateBack);
+        }
+        this._backButton.customItem = undefined;
+
+        // Hide back button
         if (!backButton) {
-            this._showBackButton = false;
-            if (this._backButtonIsCustomRenderable) {
-                this._backButtonIsCustomRenderable = false;
-                if (this._renderables.backButton && this._renderables.backButton.removeListener) {
-                    this._renderables.backButton.removeListener(this._navigateBack);
-                    this._renderables.backButton = undefined;
-                }
-                this._renderables.backButton = undefined;
-            }
-            this.reflowLayout();
+            this._renderables.backIcon = undefined;
+            this._renderables.backItem = undefined;
+            this.layout.reflowLayout();
             return this;
         }
+
+        // Create back-icon
+        if (!this._backButton.icon) {
+            this._backButton.icon = _createRenderable.call(this, 'backIcon', this.options.backIconContent);
+            if (this._backButton.icon) {
+                this._backButton.icon.on('click', this._navigateBack);
+            }
+            this._renderables.backIcon = this._backButton.icon;
+        }
+
+        // Set regular back item
         if ((backButton instanceof String) || (typeof backButton === 'string')) {
-            if (this._backButtonIsCustomRenderable) {
-                this._backButtonIsCustomRenderable = false;
-                this._renderables.backButton = undefined;
+            if (!this._backButton.item) {
+                this._backButton.item = _createRenderable.call(this, 'item', backButton);
+                if (this._backButton.item) {
+                    this._backButton.item.on('click', this._navigateBack);
+                }
             }
-            if (!this._renderables.backButton) {
-                this._renderables.backButton = _createRenderable.call(this, 'item', backButton);
-                this._renderables.backButton.on('click', this._navigateBack);
+            else {
+                this._backButton.item.setContent('<div>' + backButton + '</div>');
             }
-            else if (this._renderables.backButton.setContent) {
-                this._renderables.backButton.setContent('<div>' + backButton + '</div>');
-            }
+            this._renderables.backItem = this._backButton.item;
         }
         else {
-            if (this._renderables.backButton && this._renderables.backButton.removeListener) {
-                this._renderables.backButton.removeListener(this._navigateBack);
-                this._renderables.backButton = undefined;
-            }
-            this._titleIsCustomRenderable = true;
-            this._renderables.backButton = backButton;
+            this._backButton.customItem = backButton;
+            this._backButton.customItem.on('click', this._navigateBack);
+            this._renderables.backButton = this._backButton.customItem;
         }
-        this._showBackButton = true;
         this.layout.reflowLayout();
         return this;
     };
