@@ -102,14 +102,6 @@ define(function(require, exports, module) {
         createRenderables: {
             navBarBackground: true,
             background: true
-        },
-        navBarAnimationController: {
-            transfer: {
-                zIndez: 1,
-                items: {
-                    'backIcon': 'backIcon'
-                }
-            }
         }
     };
 
@@ -227,7 +219,9 @@ define(function(require, exports, module) {
 
         // Hookup navbar
         navItem.navBar.setBackButton(prevNavItem ? prevNavItem.navBar.getTitle() : undefined);
-        navItem.navBar.on('back', this.hide.bind(this));
+        navItem.navBar.on('back', function() {
+            this.hide();
+        }.bind(this));
 
         // Inform view of the navigation
         if (navItem.renderable.setNavigation) {
@@ -246,7 +240,14 @@ define(function(require, exports, module) {
         // Show view
         this.navBarAC.show(navItem.navBar, {
             animation: this.options.animations.show.navBar,
-            transition: transition
+            transition: transition,
+            transfer: {
+                zIndez: 1,
+                items: {
+                    'backIcon': 'backIcon',
+                    'title': 'backItem'
+                }
+            }
         });
         this.contentAC.show(navItem.renderable, {
             animation: this.options.animations.show.view,
@@ -289,7 +290,14 @@ define(function(require, exports, module) {
         // Show previous view
         this.navBarAC.show(prevNavItem ? prevNavItem.navBar : undefined, {
             animation: this.options.animations.hide.navBar,
-            transition: transition
+            transition: transition,
+            transfer: {
+                zIndez: 1,
+                items: {
+                    'backIcon': 'backIcon',
+                    'backItem': 'title'
+                }
+            }
         });
         this.contentAC.show(prevNavItem ? prevNavItem.renderable : undefined, {
             animation: this.options.animations.hide.view,

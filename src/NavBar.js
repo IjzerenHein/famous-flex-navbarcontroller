@@ -119,11 +119,12 @@ define(function(require, exports, module) {
             backIconWidth: 30
         },
         createRenderables: {
-            item: true,
             background: false,
-            backIcon: true
+            title: true,
+            backIcon: true,
+            backItem: true
         },
-        backIconContent: '<image src=\'data:image/svg+xml;utf8,<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="512px" height="512px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve"><polygon points="352,115.4 331.3,96 160,256 331.3,416 352,396.7 201.5,256 "/></svg>\' />',
+        backIconContent: '<image src=\'data:image/svg+xml;utf8,<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="512px" height="512px" viewBox="0 0 512 512" fill="#ffffff" style="enable-background:new 0 0 512 512;" xml:space="preserve"><polygon points="352,115.4 331.3,96 160,256 331.3,416 352,396.7 201.5,256 "/></svg>\' />',
         layoutController: {
             layout: NavBarLayout
         }
@@ -134,7 +135,8 @@ define(function(require, exports, module) {
      *
      */
     function _createRenderable (id, data) {
-        var option = this.options.createRenderables[id];
+        var firstId = Array.isArray(id) ? id[0] : id;
+        var option = this.options.createRenderables[firstId];
         if (option instanceof Function) {
             return option.call(this, id, data);
         }
@@ -144,10 +146,14 @@ define(function(require, exports, module) {
         if ((data !== undefined) && (data instanceof Object)) {
             return data;
         }
-        return new Surface({
-            classes: this.classes.concat([id]),
+        var surface = new Surface({
+            classes: this.classes.concat(Array.isArray(id) ? id : [id]),
             content: data ? ('<div>' + data + '</div>') : undefined
         });
+        if ((firstId === 'item') || (Array.isArray(id) && (id.indexOf('item') >= 0))) {
+            surface.setSize([true, undefined]);
+        }
+        return surface;
     }
 
     /**
@@ -193,7 +199,7 @@ define(function(require, exports, module) {
         if ((title instanceof String) || (typeof title === 'string')) {
             this._title.text = title;
             if (!this._title.item) {
-                this._title.item = _createRenderable.call(this, 'item', title);
+                this._title.item = _createRenderable.call(this, ['title', 'item'], title);
             }
             else {
                 this._title.item.setContent('<div>' + title + '</div>');
@@ -254,7 +260,7 @@ define(function(require, exports, module) {
         // Set regular back item
         if ((backButton instanceof String) || (typeof backButton === 'string')) {
             if (!this._backButton.item) {
-                this._backButton.item = _createRenderable.call(this, 'item', backButton);
+                this._backButton.item = _createRenderable.call(this, ['backItem', 'item'], backButton);
                 if (this._backButton.item) {
                     this._backButton.item.on('click', this._navigateBack);
                 }

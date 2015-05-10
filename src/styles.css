@@ -28,6 +28,10 @@ body {
 .ff-navbar.item {
   text-align: center;
   white-space: nowrap;
+  cursor: pointer;
+}
+.ff-navbar.backIcon {
+ cursor: pointer;
 }
 .ff-navbar.item > div, .ff-navbar.backIcon > div {
   /* align content vertically */
