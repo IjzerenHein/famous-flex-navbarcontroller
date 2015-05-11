@@ -9,7 +9,7 @@
  */
 
 /**
- * NavBarController.
+ * NavBarController widget for famo.us.
  *
  * @module
  */
@@ -30,8 +30,9 @@ define(function(require, exports, module) {
      * @param {Object} options Configurable options.
      * @param {Number} [options.navBarPosition] Position (0: TOP, 1: BOTTOM) (default: TOP).
      * @param {Number} [options.navBarSize] Height of the navBar (default: 50).
-     * @param {Number} [options.navBarZIndex] Z-index the navBar is put above the content (AnimationController) (default: 10).
-     * @param {Object} [options.animationController] Options that are passed to the AnimationController.
+     * @param {Number} [options.navBarZIndex] Z-index the navBar is put above the content (default: 10).
+     * @param {Object} [options.transition] Transition used for push/pop animations (default: `{duration: 300, curve: Easing.outQuad}`).
+     * @param {Object} [options.animationController] Options that are passed to the content AnimationController.
      * @alias module:NavBarController
      */
     function NavBarController(options) {
@@ -41,17 +42,21 @@ define(function(require, exports, module) {
 
         _createLayout.call(this);
         _createRenderables.call(this);
-        _setListeners.call(this);
     }
     NavBarController.prototype = Object.create(View.prototype);
     NavBarController.prototype.constructor = NavBarController;
     NavBarController.prototype.classes = ['ff-widget', 'ff-navbarctl'];
 
+    NavBarController.Position = {
+        TOP: 0,
+        BOTTOM: 1
+    };
+
     /**
      * Default layout-function for the TabBarController. Supports simple
      * docking to any of the four edges.
      */
-    NavBarController.DEFAULT_LAYOUT = function(context, options) {
+     function _layout(context, options) {
         var navBar = context.set('navBarBackground', {
             size: [context.size[0], this.options.navBarSize],
             translate: [0, this.options.navBarPosition ? (context.size[1] - this.options.navBarSize) : 0, this.options.navBarZIndex]
@@ -68,35 +73,51 @@ define(function(require, exports, module) {
             size: content.size,
             translate: [content.translate[0], content.translate[1], content.translate[2] + 1]
         });
-    };
+    }
 
-    NavBarController.NavBarSlideLeftAndFade = function(show, size) {
+    /**
+     * Slide animations used for the nav-bar.
+     */
+    function _navBarSlideLeftAndFade(show, size) {
         return {
             transform: Transform.translate(show ? size[0] : -size[0], 0, 0),
-            opacity: (this && (this.opacity !== undefined)) ? this.opacity : 0
+            opacity: -3
         };
-    };
-
-    NavBarController.NavBarSlideRightAndFade = function(show, size) {
+    }
+    function _navBarSlideRightAndFade(show, size) {
         return {
             transform: Transform.translate(show ? -size[0] : size[0], 0, 0),
-            opacity: (this && (this.opacity !== undefined)) ? this.opacity : 0
+            opacity: -3
         };
-    };
+    }
 
     NavBarController.DEFAULT_OPTIONS = {
-        navBarPosition: 0,
+        navBarPosition: NavBarController.Position.TOP,
         navBarSize: 50,
         navBarZIndex: 10,
-        transition: {duration: 300, curve: Easing.outQuad},
+        navBar: {},
+        transition: {duration: 400, curve: Easing.outQuad},
         animations: {
-            show: {
-                navBar: NavBarController.NavBarSlideLeftAndFade,
-                view: AnimationController.Animation.Slide.Left
+            pushFirst: {
+                navBar: AnimationController.Animation.Fade,
+                content: AnimationController.Animation.Fade
             },
-            hide: {
-                navBar: NavBarController.NavBarSlideRightAndFade,
-                view: AnimationController.Animation.Slide.Right
+            push: {
+                navBar: _navBarSlideLeftAndFade,
+                content: AnimationController.Animation.Slide.Left
+            },
+            pop: {
+                navBar: _navBarSlideRightAndFade,
+                content: AnimationController.Animation.Slide.Right
+            },
+            popLast: {
+                navBar: AnimationController.Animation.Fade,
+                content: AnimationController.Animation.Fade
+            }
+        },
+        animationController: {
+            transfer: {
+                transition: {duration: 300, curve: Easing.inQuad}
             }
         },
         createRenderables: {
@@ -110,13 +131,12 @@ define(function(require, exports, module) {
      */
     function _createLayout() {
         this.layout = new LayoutController(this.options.layoutController);
-        this.layout.setLayout(NavBarController.DEFAULT_LAYOUT.bind(this));
+        this.layout.setLayout(_layout.bind(this));
         this.add(this.layout);
     }
 
     /**
      * Creates a new renderable for the given renderable-id.
-     *
      */
     function _createRenderable (id, data) {
         var option = this.options.createRenderables[id];
@@ -162,20 +182,14 @@ define(function(require, exports, module) {
     }
 
     /**
-     * Sets the listeners.
-     */
-    function _setListeners() {
-        // TODO
-    }
-
-    /**
      * Patches the TabBarController instance's options with the passed-in ones.
      *
      * @param {Object} options Configurable options.
      * @param {Number} [options.navBarPosition] Position (0: TOP, 1: BOTTOM) (default: TOP).
      * @param {Number} [options.navBarSize] Height of the navBar (default: 50).
-     * @param {Number} [options.navBarZIndex] Z-index the navBar is put above the content (AnimationController) (default: 10).
-     * @param {Object} [options.animationController] Options that are passed to the AnimationController.
+     * @param {Number} [options.navBarZIndex] Z-index the navBar is put above the content (default: 10).
+     * @param {Object} [options.transition] Transition used for push/pop animations (default: `{duration: 300, curve: Easing.outQuad}`).
+     * @param {Object} [options.animationController] Options that are passed to the content AnimationController.
      * @return {NavBarController} this
      */
     NavBarController.prototype.setOptions = function(options) {
@@ -197,14 +211,14 @@ define(function(require, exports, module) {
     };
 
     /**
-     * Shows a new view.
+     * Pushes a new view onto the NavBarController.
      *
      * @param {Renderable} renderable View/surface to show.
-     * @param {Object} [transition] Transition.
-     * @param {Function} [callback] Callback function.
+     * @param {Object} [transition] Transition options.
+     * @param {Function} [callback] Function called on completion.
      * @return {Object} Navigation-item object
      */
-    NavBarController.prototype.show = function(renderable, transition, callback) {
+    NavBarController.prototype.push = function(renderable, transition, callback) {
 
         // Create new nav-item
         var navItem = {
@@ -219,18 +233,23 @@ define(function(require, exports, module) {
 
         // Hookup navbar
         navItem.navBar.setBackButton(prevNavItem ? prevNavItem.navBar.getTitle() : undefined);
+        var backReceived;
         navItem.navBar.on('back', function() {
-            this.hide();
+            if (!backReceived) {
+                backReceived = true;
+                this.pop();
+            }
         }.bind(this));
 
-        // Inform view of the navigation
-        if (navItem.renderable.setNavigation) {
-            navItem.renderable.setNavigation(navItem);
+        // Inform view of the navigation-item
+        if (navItem.renderable.setNavigationItem) {
+            navItem.renderable.setNavigationItem(navItem);
         }
 
         // Notify views
         var event = {
-            target: this
+            target: this,
+            push: true
         };
         if (prevNavItem) {
             prevNavItem._eventOutput.emit('starthide', event);
@@ -239,7 +258,7 @@ define(function(require, exports, module) {
 
         // Show view
         this.navBarAC.show(navItem.navBar, {
-            animation: this.options.animations.show.navBar,
+            animation: prevNavItem ? this.options.animations.push.navBar : this.options.animations.pushFirst.navBar,
             transition: transition,
             transfer: {
                 zIndez: 1,
@@ -250,7 +269,7 @@ define(function(require, exports, module) {
             }
         });
         this.contentAC.show(navItem.renderable, {
-            animation: this.options.animations.show.view,
+            animation: prevNavItem ? this.options.animations.push.content : this.options.animations.pushFirst.content,
             transition: transition
         }, function() {
             if (prevNavItem) {
@@ -265,13 +284,13 @@ define(function(require, exports, module) {
     };
 
     /**
-     * Hides the current view.
+     * Removes the last view from the NavBarController.
      *
-     * @param {Object} [transition] Transition.
-     * @param {Function} [callback] Callback function.
+     * @param {Object} [transition] Transition options.
+     * @param {Function} [callback] Function called on completion.
      * @return {Object} Navigation-item object
      */
-    NavBarController.prototype.hide = function(transition, callback) {
+    NavBarController.prototype.pop = function(transition, callback) {
         if (!this._navStack.length) {
             return undefined;
         }
@@ -280,7 +299,8 @@ define(function(require, exports, module) {
 
         // Notify views
         var event = {
-            target: this
+            target: this,
+            push: false
         };
         navItem._eventOutput.emit('starthide', event);
         if (prevNavItem) {
@@ -289,7 +309,7 @@ define(function(require, exports, module) {
 
         // Show previous view
         this.navBarAC.show(prevNavItem ? prevNavItem.navBar : undefined, {
-            animation: this.options.animations.hide.navBar,
+            animation: prevNavItem ? this.options.animations.pop.navBar : this.options.animations.popLast.navBar,
             transition: transition,
             transfer: {
                 zIndez: 1,
@@ -300,7 +320,7 @@ define(function(require, exports, module) {
             }
         });
         this.contentAC.show(prevNavItem ? prevNavItem.renderable : undefined, {
-            animation: this.options.animations.hide.view,
+            animation: prevNavItem ? this.options.animations.pop.content : this.options.animations.popLast.content,
             transition: transition
         }, function() {
             navItem._eventOutput.emit('endhide', event);

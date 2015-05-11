@@ -89,23 +89,23 @@ define(function(require, exports, module) {
 
     function _setupListeners() {
         this.on('click', function() {
-            this.navigation.navBarController.show(new ProfileView());
+            this.navItem.navBarController.push(new ProfileView());
         }.bind(this));
     }
 
-    FullImageView.prototype.setNavigation = function(navigation) {
-        this.navigation = navigation;
-        navigation.navBar.setTitle('Full Image');
-        navigation.on('starthide', function() {
+    FullImageView.prototype.setNavigationItem = function(navItem) {
+        this.navItem = navItem;
+        navItem.navBar.setTitle('Image');
+        navItem.on('starthide', function() {
             console.log('FullImageView -> starthide');
         });
-        navigation.on('endhide', function() {
+        navItem.on('endhide', function() {
             console.log('FullImageView -> endhide');
         });
-        navigation.on('startshow', function() {
+        navItem.on('startshow', function() {
             console.log('FullImageView -> startshow');
         });
-        navigation.on('endshow', function() {
+        navItem.on('endshow', function() {
             console.log('FullImageView -> endshow');
         });
     };

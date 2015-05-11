@@ -1,5 +1,5 @@
 body, div {
-  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
 
   /* prevent text selection */
   -moz-user-select: -moz-none;
@@ -29,6 +29,7 @@ body {
   text-align: center;
   white-space: nowrap;
   cursor: pointer;
+  background-color: #1185c3;
 }
 .ff-navbar.backIcon {
  cursor: pointer;
@@ -53,11 +54,17 @@ body {
 }
 .ff-navbar.backIcon > div img {
   width: 100%;
-  height: 100%;
+  height: 22px;
+  margin-top: 4px;
+}
+.ff-navbar.item:active {
+  color: #DDDDEE;
 }
 
 
-
+.view {
+  cursor: pointer;
+}
 .view.background {
   background-color: #FAFAFA;
 }

@@ -9,53 +9,32 @@
  */
 
 /**
- * TabBar widget for famo.us.
+ * NavBar widget for famo.us.
  *
  * ```javascript
- * var TabBar = require('famous-flex/widgets/TabBar');
+ * var NavBar = require('famous-flex/widgets/NavBar');
  *
- * var tabBar = new TabBar({
+ * var navBar = new NavBar({
  *   classes: ['black'],
  *   createRenderables: {
- *     background: true,
- *     selectedItemOverlay: true,
- *     spacers: true
+ *     background: true
  *   }
  * });
- * tabBar.setItems([
- *   'one',
- *   'two',
- *   'three'
- * ]);
- * this.add(tabBar); // add to the render-tree
- *
- * tabBar.on('tabchange', function(event) {
- *   console.log('new tab selected: ' + event.index);
- * });
+ * this.add(navBar); // add to the render-tree
+ * navBar.setTitle('View 1');
  * ```
  *
- * The surfaces that are created, use the the css-classes `ff-widget` and `ff-tabbar`.
+ * The surfaces that are created, use the the css-classes `ff-widget` and `ff-navbar`.
  * You can add additional css-classes by using the `classes` option in the constructor.
  *
  * Example css styles for a black theme:
  *
  * ```css
- * .ff-tabbar.background.black {
+ * .ff-navbar.background.black {
  *   background-color: #101010;
  * }
- * .ff-tabbar.item.black {
+ * .ff-navbar.item.black {
  *   color: #f7f3f7;
- * }
- * .ff-tabbar.selectedItemOverlay.black {
- *   border-bottom: 6px solid #30b6e7;
- * }
- * .ff-tabbar.spacer.black:after {
- *   content: "";
- *   background-color: #333333;
- *   width: 100%;
- *   top: 10px;
- *   bottom: 10px;
- *   position: absolute;
  * }
  * ```
  *
@@ -68,13 +47,14 @@ define(function(require, exports, module) {
     var View = require('famous/core/View');
     var LayoutController = require('famous-flex/LayoutController');
     var NavBarLayout = require('famous-flex/layouts/NavBarLayout');
+    var Engine = require('famous/core/Engine');
 
     /**
      * @class
      * @extends View
      * @param {Object} options Configurable options.
      * @param {Object} [options.navBarLayout] Layout-options that are passed to the NavBarLayout.
-     * @param {Object} [options.layoutController] Options that are passed to the underlying layout-controller.
+     * @param {Objecit} [options.layoutController] Options that are passed to the underlying layout-controller.
      * @param {Array.String} [options.classes] Css-classes that are added to the surfaces that are created.
      * @param {Object} [options.createRenderables] Options that specify which renderables should be created.
      * @alias module:NavBar
@@ -86,7 +66,7 @@ define(function(require, exports, module) {
         options = options || {};
         this.classes = options.classes ? this.classes.concat(options.classes) : this.classes;
 
-        // create TabBar layout
+        // create NavBar layout
         this.layout = new LayoutController(this.options.layoutController);
         this.add(this.layout);
         this.layout.pipe(this._eventOutput);
@@ -102,10 +82,6 @@ define(function(require, exports, module) {
                 target: this
             });
         }.bind(this);
-        if (this._renderables.backIcon) {
-            this._renderables.backIcon.on('click', this._navigateBack);
-        }
-
         this.setOptions(this.options);
     }
     NavBar.prototype = Object.create(View.prototype);
@@ -116,7 +92,7 @@ define(function(require, exports, module) {
         navBarLayout: {
             margins: [0, 0, 0, 0],
             spacing: 0,
-            backIconWidth: 30
+            backIconWidth: 34
         },
         createRenderables: {
             background: false,
@@ -124,7 +100,9 @@ define(function(require, exports, module) {
             backIcon: true,
             backItem: true
         },
-        backIconContent: '<image src=\'data:image/svg+xml;utf8,<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="512px" height="512px" viewBox="0 0 512 512" fill="#ffffff" style="enable-background:new 0 0 512 512;" xml:space="preserve"><polygon points="352,115.4 331.3,96 160,256 331.3,416 352,396.7 201.5,256 "/></svg>\' />',
+        //backIconContent: '<image src=\'data:image/svg+xml;utf8,<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="512px" height="512px" viewBox="0 0 512 512" fill="#ffffff" style="enable-background:new 0 0 512 512;" xml:space="preserve"><polygon points="352,115.4 331.3,96 160,256 331.3,416 352,396.7 201.5,256 "/></svg>\' />',
+        //backIconContent: '<image src=\'data:image/svg+xml;utf8,<svg width="44px" height="71px" viewBox="0 0 44 71" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"><g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage"><path d="M0.144660941,35.5 L0.0796897832,35.5649712 L35.4350288,70.9203102 L43.9203102,62.4350288 L16.9852814,35.5 L43.9203102,8.56497116 L35.4350288,0.0796897832 L0.0796897832,35.4350288 L0.144660941,35.5 Z" id="back" fill="#FFFFFF" sketch:type="MSShapeGroup"></path></g></svg>\' />',
+        backIconContent: '<image src=\'data:image/svg+xml;utf8,<svg width="19px" height="31px" viewBox="0 0 19 31" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"><g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage"><path d="M1.06628908,15.5796898 L0.921259427,15.7247194 L15.8937451,30.6972051 L18.7221722,27.8687779 L6.43308403,15.5796898 L18.7221722,3.29060162 L15.8937451,0.462174497 L0.921259427,15.4346601 L1.06628908,15.5796898 Z" id="back" fill="#FFFFFF" sketch:type="MSShapeGroup"></path></g></svg>\' />',
         layoutController: {
             layout: NavBarLayout
         }
@@ -162,7 +140,7 @@ define(function(require, exports, module) {
      * @param {Object} options Configurable options.
      * @param {Object} [options.navBarLayout] Layout-options that are passed to the NavBarLayout.
      * @param {Object} [options.layoutController] Options that are passed to the underlying layout-controller.
-     * @return {TabBar} this
+     * @return {NavBar} this
      */
     NavBar.prototype.setOptions = function(options) {
         View.prototype.setOptions.call(this, options);
@@ -177,6 +155,11 @@ define(function(require, exports, module) {
         }
         return this;
     };
+
+    var renderCycle = 0;
+    Engine.on('prerender', function() {
+        renderCycle++;
+    });
 
     /**
      * Sets the title of the nav-bar. The title can be either
@@ -277,6 +260,48 @@ define(function(require, exports, module) {
         }
         this.layout.reflowLayout();
         return this;
+    };
+
+    /**
+     * Sets the items displayed at the the left.
+     *
+     * @param {Array} leftItems Strings or renderables that are displayed at the left.
+     * @return {NavBar} this
+     */
+    NavBar.prototype.setLeftItems = function(leftItems) {
+        this._renderables.leftItems = leftItems;
+        this.layout.reflowLayout();
+        return this;
+    };
+
+    /**
+     * Gets the items displayed at the the left.
+     *
+     * @return {Array} Array of items or `undefined`
+     */
+    NavBar.prototype.getLeftItems = function() {
+        return this._renderables.leftItems;
+    };
+
+    /**
+     * Sets the items displayed at the the left.
+     *
+     * @param {Array} rightItems Strings or renderables that are displayed at the right.
+     * @return {NavBar} this
+     */
+    NavBar.prototype.setRightItems = function(rightItems) {
+        this._renderables.rightItems = rightItems;
+        this.layout.reflowLayout();
+        return this;
+    };
+
+    /**
+     * Gets the items displayed at the the right.
+     *
+     * @return {Array} Array of items or `undefined`
+     */
+    NavBar.prototype.getRightItems = function() {
+        return this._renderables.rightItems;
     };
 
     module.exports = NavBar;

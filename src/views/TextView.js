@@ -14,7 +14,6 @@ define(function(require, exports, module) {
     var Surface = require('famous/core/Surface');
     var ScrollController = require('famous-flex/ScrollController');
     var BkImageSurface = require('famous-bkimagesurface/BkImageSurface');
-    var LocationView = require('./LocationView');
 
     /**
      * @class
@@ -26,7 +25,6 @@ define(function(require, exports, module) {
 
         _createLayout.call(this);
         _createRenderables.call(this);
-        _setupListeners.call(this);
     }
     TextView.prototype = Object.create(View.prototype);
     TextView.prototype.constructor = TextView;
@@ -87,15 +85,9 @@ define(function(require, exports, module) {
         this.layout.setDataSource(this._renderables);
     }
 
-    function _setupListeners() {
-        this.on('click', function() {
-            this.navigation.navBarController.show(new LocationView());
-        }.bind(this));
-    }
-
-    TextView.prototype.setNavigation = function(navigation) {
-        this.navigation = navigation;
-        navigation.navBar.setTitle('Text');
+    TextView.prototype.setNavigationItem = function(navItem) {
+        this.navItem = navItem;
+        navItem.navBar.setTitle('Details');
     };
 
     module.exports = TextView;

@@ -28,6 +28,9 @@ define(function(require) {
     var FullImageView = require('./views/FullImageView');
     var PhoneFrameView = require('./PhoneFrameView');
     var MapView = require('famous-map/MapView');
+    var Lagometer = require('famous-lagometer/Lagometer');
+    var Modifier = require('famous/core/Modifier');
+    var Transform = require('famous/core/Transform');
 
     // On mobile, disable app-mode and install the custom MapView
     // touch-handler so that Google Maps works.
@@ -54,6 +57,18 @@ define(function(require) {
             }
         }
     });
-    navBarController.show(new FullImageView());
+    navBarController.push(new FullImageView());
     phoneFrameView.setContent(navBarController);
+
+    // Show lagomter
+    var modifier = new Modifier({
+        size: [100, 100],
+        align: [1.0, 0.0],
+        origin: [1.0, 0.0],
+        transform: Transform.translate(-10, 10, 10000)
+    });
+    var lagometer = new Lagometer({
+        size: modifier.getSize() // required
+    });
+    //mainContext.add(modifier).add(lagometer);
 });

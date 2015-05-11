@@ -106,13 +106,13 @@ define(function(require, exports, module) {
 
     function _setupListeners() {
         this.on('click', function() {
-            this.navigation.navBarController.show(new TextView());
+            this.navItem.navBarController.push(new TextView());
         }.bind(this));
     }
 
-    ProfileView.prototype.setNavigation = function(navigation) {
-        this.navigation = navigation;
-        navigation.navBar.setTitle('Profile');
+    ProfileView.prototype.setNavigationItem = function(navItem) {
+        this.navItem = navItem;
+        navItem.navBar.setTitle('Profile');
     };
 
     module.exports = ProfileView;
